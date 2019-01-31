@@ -1,0 +1,32 @@
+server:
+  port: 8080
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+  datasource:
+    url:  jdbc:mysql://127.0.0.1:3306/e3mall?characterEncoding=UTF-8
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update #\u65B0\u589E\u6570\u636E\u5E93\u94FE\u63A5\u5FC5\u5907\u7684\u53C2\u6570
+  mongodb:
+    embedded:
+      version:
+
+# pageHelper分页配置
+pagehelper:
+  helper-dialect: mysql
+  reasonable: false
+  support-methods-arguments: true
+  params: count=countSql
+
+  #mybatis config
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+
+#redis中存放用户的key,数据类型选String
+USER_KEY: USER
