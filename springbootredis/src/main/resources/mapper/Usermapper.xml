@@ -4,4 +4,15 @@
    <select id="getall" resultType="com.nj.pojo.User" >
      select * from test
    </select>
+
+    <update id="update" parameterType="com.nj.pojo.User" >
+        update test
+        <set>
+            <if test="id !=null ">id=#{id},</if>
+            <if test="yourname !=null">yourname=#{yourname},</if>
+            <if test="age!=null">age=#{age}</if>
+        </set>
+        where id=#{id}
+
+    </update>
 </mapper>

@@ -30,3 +30,5 @@ mybatis:
 
 #redis中存放用户的key,数据类型选String
 USER_KEY: USER
+#redis中存放用户的key的过期时间默认7天
+USER_KRY_EXPIRE: 604800000

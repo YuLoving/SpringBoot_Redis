@@ -54,4 +54,17 @@ public class UserserviceImpl implements IUserservice {
         jedisClient.expire(USER_KEY,USER_KRY_EXPIRE);
         return  listall;
     }
+
+    /**
+     * 更新操作的同时，要同步redis中数据，可以直接删除
+     * @param user
+     * @return
+     */
+    @Override
+    public int update(User user) {
+        int i = usermapper.update(user);
+        //同步redis中的数据，
+        jedisClient.del(USER_KEY);
+        return i;
+    }
 }
