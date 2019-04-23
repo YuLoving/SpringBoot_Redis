@@ -1,0 +1,196 @@
+一、poi简介
+ Apache POI是Apache软件基金会的开放源码函式库，POI提供API给Java程序对Microsoft Office格式档案读和写的功能。
+
+注意：
+Excel共有两种格式：xls（03版本）和xlsx（07及之后版本）。
+POI提供了两个对应接口类，分别为：HSSFWorkbook和XSSFWorkbook。
+
+1、HSSF：HSSF 是Horrible SpreadSheet Format的缩写，通过HSSF，你可以用纯Java代码来读取、写入、修改Excel文件。HSSF 为读取操作提供了两类API：usermodel和eventusermodel，即“用户模型”和“事件-用户模型”。
+
+2、POI EXCEL文档结构类
+
+HSSFWorkbook excel文档对象
+HSSFSheet excel的sheet HSSFRow excel的行
+HSSFCell excel的单元格 HSSFFont excel字体
+HSSFName 名称 HSSFDataFormat 日期格式
+HSSFHeader sheet头
+HSSFFooter sheet尾
+HSSFCellStyle cell样式
+HSSFDateUtil 日期
+HSSFPrintSetup 打印
+HSSFErrorConstants 错误信息表
+3、导入Excel常用的方法：
+
+POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream("d:/test.xls"));    
+HSSFWorkbook wb = new HSSFWorkbook(fs);  //得到Excel工作簿对象   
+HSSFSheet sheet = wb.getSheetAt(0);   //得到Excel工作表对象   
+HSSFRow row = sheet.getRow(i);  //得到Excel工作表的行   
+HSSFCell cell = row.getCell((short) j);  //得到Excel工作表指定行的单元格 
+cellStyle = cell.getCellStyle();  //得到单元格样式  
+4、导出Excel常用的方法：
+
+HSSFWorkbook wb = new HSSFWorkbook();  //创建Excel工作簿对象   
+HSSFSheet sheet = wb.createSheet("new sheet");  //创建Excel工作表对象     
+HSSFRow row = sheet.createRow((short)0);  //创建Excel工作表的行   
+cellStyle = wb.createCellStyle();  //创建单元格样式   
+row.createCell((short)0).setCellStyle(cellStyle);  //创建Excel工作表指定行的单元格   
+row.createCell((short)0).setCellValue(1);  //设置Excel工作表的值  
+-----------------------------------------------------------------------------------------
+pom依赖
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi</artifactId>
+    <version>RELEASE</version>
+</dependency>
+
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>RELEASE</version>
+</dependency>
+前者用于引入HSSFWorkbook；后者用于引入XSSFWorkbook
+--------------------- -----------------------------------------------
+在对文件操作前，需要对版本进行判断。
+
+    public static boolean isExcel2003(String filePath)
+    {
+        return filePath.matches("^.+\\.(?i)(xls)$");
+    }
+
+    public static boolean isExcel2007(String filePath)
+    {
+        return filePath.matches("^.+\\.(?i)(xlsx)$");
+    }
+-------------------------------------------------------------------------
+导入Excel
+我们仍以之前的Hero为例。将Excel中的数据导出至List中，代码如下。
+
+    public List<Hero> importData(File file)
+    {
+        Workbook wb = null;
+        List<Hero> HeroList = new ArrayList();
+        try
+        {
+            if (ExcelUtil.isExcel2007(file.getPath())) {
+                wb = new XSSFWorkbook(new FileInputStream(file));
+            } else {
+                wb = new HSSFWorkbook(new FileInputStream(file));
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+
+            return null;
+        }
+
+        Sheet sheet = wb.getSheetAt(0);//获取第一张表
+        for (int i = 0; i < sheet.getLastRowNum(); i++)
+        {
+            Row row = sheet.getRow(i);//获取索引为i的行，以0开始
+            String name= row.getCell(0).getStringCellValue();//获取第i行的索引为0的单元格数据
+            int age = row.getCell(1).getNumericCellValue();
+            if (age==0 && name==null)
+            {
+                break;
+            }
+            Hero hero=New Hero();
+            hero.setName(name);
+            hero.setAge(age);
+            HeroList.add(hero);
+        }
+        try
+        {
+            wb.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return HeroList;
+    }
+
+这里有两点需要注意
+
+（1）getLastRowNum()并非获取实际行数。因此，需要coder自行判断，是否已经到了最后一行（有效行）。
+
+（2）有些单元格为Numeric格式，带有指数E。因此，若想获取其String类型时，需要进行格式转换。
+
+    public static String getStringFromNumericCell(Cell cell)
+    {
+        return new DecimalFormat("#").format(cell.getNumericCellValue());
+    }
+
+导出Excel
+这里我们将记录，以模板的形式导出Excel，即具有某种格式化。
+
+    public static void exportHeroInfo(List<Hero> heroList,String templetFilePath, String exportFilePath){
+        try {
+            File exportFile=new File(exportFilePath);
+            File templetFile= new File(templetFilePath);
+            Workbook workBook;
+
+            if(!exportFile.exists()){
+                exportFile.createNewFile();
+            }
+
+            FileOutputStream out = new FileOutputStream(exportFile);
+            FileInputStream fis = new FileInputStream(templetFile);
+            if(isExcel2007(templetFile.getPath())){
+                workBook=new XSSFWorkbook(fis);
+            }else {
+                workBook=new HSSFWorkbook(fis);
+            }
+
+            Sheet sheet=workBook.getSheetAt(0);
+
+            int rowIndex = 1 ;
+            for (Hero item :
+                    heroList) {
+                Row row=sheet.createRow(rowIndex);
+                row.createCell(0).setCellValue(item.getHeroAge());
+                row.createCell(1).setCellValue(item.getHeroName());
+                rowIndex++;
+            }
+
+            workBook.write(out);
+            out.flush();
+            out.close();
+
+            fis.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+经过测试，发现可以以模板的格式导出数据，但对于单元格的边框效果，似乎不起作用。有了解的童鞋，还望指点。
+本人是通过添加cellStyle的方式，补充格式的。
+
+单元格格式
+若需要对固定的单元格，添加cellStyle。代码如下：
+
+（1）创建CellStyle
+
+    public static CellStyle setSimpleCellBorder(Workbook workbook){
+        CellStyle style=workbook.createCellStyle();
+
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
+
+（2）为单元格添加CellStyle
+
+    public static void inputCell(Row row, int index, String value, CellStyle style){
+        Cell cell=row.createCell(index);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+    }
+
+至此，使用POI对Excel进行导入导出小结完毕。
+
+
