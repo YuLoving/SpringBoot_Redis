@@ -67,4 +67,9 @@ public class UserserviceImpl implements IUserservice {
         jedisClient.del(USER_KEY);
         return i;
     }
+
+    @Override
+    public List<User> getbyname(String name) {
+        return usermapper.getbyname(name);
+    }
 }

@@ -15,4 +15,10 @@
         where id=#{id}
 
     </update>
+
+    <select id="getbyname" resultType="com.nj.pojo.User" >
+     select * from test
+     where FIND_IN_SET(yourname,#{name})
+   </select>
+
 </mapper>

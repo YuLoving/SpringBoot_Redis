@@ -10,4 +10,7 @@ public interface Usermapper {
     List<User> getall();
 
     int update(User user);
+
+    //测试
+    List<User> getbyname(String name);
 }
